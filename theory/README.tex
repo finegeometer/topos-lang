@@ -1,0 +1,266 @@
+\documentclass{article}
+
+\usepackage{biblatex}
+\addbibresource{README.bib}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathpartir}
+
+\usepackage{todonotes}
+\usepackage{hyperref}
+
+\title{A Directed, Topos-Theoretic Type Theory}
+\author{finegeometer}
+
+\begin{document}
+\maketitle
+
+% \tableofcontents
+
+\begin{quotation}
+    In anything at all, perfection is finally attained not when there is no longer anything to add, but when there is no longer anything to take away, when a body has been stripped down to its nakedness.
+
+    --- Antoine de Saint-Exupéry; \emph{Wind, Sand and Stars}
+\end{quotation}
+
+I describe a system that displays aspects of modal and directed type theories,
+at no more theoretical complexity cost than Martin L\"of Type Theory.
+
+\tableofcontents
+
+\section{Motivations}
+
+\subsection{Multimode}
+
+Standard, Martin-L\"of type theory can be interpreted in an arbitrary topos.
+By working in these toposes, and adopting the axioms they support,
+we get simple and beautiful ``synthetic'' accounts of various areas of mathematics,
+such as differential geometry, algebraic geometry, domain theory, or higher category theory. 
+
+In 2020, Gratzer, Kavvos, Nuyts, and Birkedal introduced \emph{Multimode Type Theory} (\cite{MTT}),
+which is to be interpreted not in a single topos, but a collection of them.
+It innovates over previous modal type theories in that it isn't tied to a specific interpretation.
+In fact, thanks to a followup paper by Shulman (\cite{MTT_Shulman}), we know that it can be interpreted
+in \emph{any} finite diagram of toposes, chosen in advance.
+
+But why should we require the toposes be chosen in advance?
+Why not let the \emph{programmer} choose, on a program-by-program basis?
+
+\subsection{Directed}
+
+Homotopy type theory is an extension of Martin-L\"of type theory,
+in which every construction provably respects isomorphism.
+That is, we can prove that every function from e.g. groups to sets
+takes isomorphic groups to isomorphic sets. This is really convenient,
+since otherwise we'd have to prove this manually for every function we care about;
+a task that quickly becomes tedious.
+
+But just as often, we want to know that our constructions are functorial.
+That they preserve not just isomorphisms, but morphisms.
+This has inspired the search for a \emph{directed} type theory;
+one in which types automatically carry the structure of a category,
+and functions between them are always functorial.
+
+But there's a problem. The type \(A \to B\) isn't functorial in \(A\)!
+It's \emph{contravariantly} functorial. So it seems any directed type theory
+needs to handle multiple variances of functor.
+This becomes more and more complicated when we start to work with higher categories,
+and it is unclear how to proceed.
+
+\subsection{Simplicity}
+
+My final motivation is a strong desire for simplicity.
+
+Martin-L\"of type theory is an impressively simple language.
+Multimode type theory isn't \emph{too} complicated, but it's certainly less simple.
+In tackling the problems described above, I am unwilling to allow
+the complexity of the language to continue to increase.
+
+As an example of this philosophy, consider Multimode Type Theory.
+It has modalities, which allow the user to move to another topos.
+But abstracting over a variable means you move to a slice topos.
+Yet these two features are unrelated in Multimode Type Theory,
+so I naturally focus on trying to merge them.
+
+\section{Design Process}
+
+I began with the insight was that describing a \emph{classifying} topos feels similar to describing a context in a type theory.
+Describing a geometric morphism between classifying toposes feels like a substitution.
+
+So why not merge the concepts?
+
+Interpret the contexts of Martin-L\"of type theory as \emph{toposes}. The substitutions as geometric morphisms.
+The types as the objects of the toposes, and the terms as global elements.
+
+So I tried that. It didn't work. In the model, \((\Pi x : A. B)[\sigma]\)
+and \(\Pi x : A[\sigma]. B[\sigma[\mathbf{wk}], x]\) don't have the same interpretation.
+
+But do we need them to?
+
+Let's simply \emph{remove} the commutation rules.
+Substitutions will no longer commute through \(\Pi\)-types, lambdas, or function application.
+To compensate, we generalize \(\beta\)-reduction to handle the case
+where a substitution is sandwiched between the lambda and the application.
+
+Is this \emph{too} simple? Too weak? Maybe, but maybe not.
+The weakened substitution rules do not block evaluation;
+they only weaken type equality.
+
+And in removing these commutation rules,
+I seem to have unintentionally solved the variance issue for directed type theory.
+When we ask if \(A \to B\) is functorial in \(A\), we're no longer asking
+if a map \(A \to A'\) yields a map \((A \to B) \to (A' \to B)\).
+We're asking if it yields a map \((X \to B)[A/X] \to (X \to B)[A'/X]\).
+Without the commutation rules, this is a different question,
+and there's no reason it isn't possible.
+
+\section{The Language}
+
+\newcommand{\Cx}{\mathsf{Cx}}
+\newcommand{\Sb}{\mathsf{Sb}}
+\newcommand{\Ty}{\mathsf{Ty}}
+\newcommand{\Tm}{\mathsf{Tm}}
+
+The language is specified as follows.
+
+\begin{itemize}
+    \item We have a category of contexts.
+    \begin{mathpar}
+        \inferrule{ }{\Cx}
+        \and \inferrule{\Gamma : \Cx \\ \Delta : \Cx}{\Sb(\Gamma, \Delta)}
+        \\ \inferrule{\Gamma : \Cx}{\mathsf{id} : \Sb(\Gamma,\Gamma)}
+        \and \inferrule{\sigma : \Sb(\Gamma,\Delta) \\ \tau : \Sb(\Delta,\Xi)}{\tau[\sigma] : \Sb(\Gamma,\Xi)}
+        \\ \mathsf{id}[\sigma] = \sigma
+        \and \sigma[\mathsf{id}] = \sigma
+        \and \upsilon[\tau[\sigma]] = \upsilon[\tau][\sigma]
+    \end{mathpar}
+    \item We have types and terms, acted on contravariantly by substitutions.
+    \begin{mathpar}
+        \inferrule{\Gamma : \Cx}{\Ty(\Gamma)}
+        \and \inferrule{A : \Ty(\Gamma)}{\Tm(\Gamma,A)}
+        \\ \inferrule{\sigma : \Sb(\Xi,\Gamma) \\ A : \Ty(\Gamma)}{A[\sigma] : \Ty(\Xi)}
+        \and \inferrule{\sigma : \Sb(\Xi,\Gamma) \\ a : \Tm(\Gamma, A)}{a[\sigma] : \Tm(\Xi, A[\sigma])}
+    \end{mathpar}
+    \item A few specific contexts, characterized by their mapping-in behavior.
+    \begin{mathpar}
+        \inferrule{ }{\Gamma : \Cx}
+        \and \inferrule{\Gamma,\Delta : \Cx \\ \mu : \Sb(\Gamma,\Delta) \\ A : \Ty(\Delta)}{(\Gamma, x :_\mu A) : \Cx}
+        \\ \Sb(\Xi,\epsilon) \simeq \mathbf{1}
+        \and \Sb(\Xi,\Gamma, x :_\mu A) \simeq (\sigma : \Sb(\Xi,\Gamma)) \times \Tm(\Xi,A[\mu][\sigma])
+        \\ ()[\sigma] = ()
+        \and (\tau,a)[\sigma] = \tau[\sigma],a[\sigma]
+    \end{mathpar}
+    \begin{itemize}
+        \item In those last two equations, the computation rules for composition of substitutions,
+        I conflate \(\Sb(\Xi,\epsilon)\) with \(\mathbf{1}\), and similarly for \(\Sb(\Xi,\Gamma, x :_\mu A)\).
+        I continue to do so throughout this writeup.
+        \item Somewhat surprisingly, the above rules implicitly introduce the concept of variables.
+        The identity substitution on any nonempty context decomposes as \(\mathsf{id} = (\mathsf{wk},\mathsf{v}_0)\),
+        into a weakening substitution and the variable with DeBruijn index zero.
+        If the weakened context is still nonempty, then we further decompose \(\mathsf{wk} = (\mathsf{wk}^2,\mathsf{v}_1)\).
+        Et cetera.
+        \todo{Where did I learn this trick? Cite it.}
+    \end{itemize}
+    (Those last two equations, the computation rules for composition of substitutions,
+    only make sense after implicitly casting by the equivalences above them.)
+    \item Finally, we introduce \(\Pi\)-types and universes, along with characterizations of their terms.
+    \begin{mathpar}
+        \inferrule{\mu : \Sb(\Gamma,\Delta) \\ A : \Ty(\Delta) \\ B : \Ty(\Gamma, x :_\mu A)}{((x :_\mu A) \to B) : \Ty(\Gamma)}
+        \and \inferrule{ }{\mathcal{U} : \Ty(\Gamma)}
+        \\ \Tm(\Gamma, (x :_\mu A) \to B) \simeq \Tm((\Gamma, x :_\mu A), B)
+        \and \Tm(\Gamma, \mathcal{U}) \simeq \Ty(\Gamma)
+    \end{mathpar}
+    \begin{itemize}
+        \item We assume \emph{nothing} about the interaction of these types with substitution.
+        There are no commutation rules; \(((x :_\mu A) \to B)[\sigma]\) is unrelated to anything of the form \((x :_{\dots} A[\dots]) \to B[\dots]\).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Topos Interpretation}
+
+To get an \emph{interesting} interpretation into toposes, we should be more careful about universe levels.
+
+Interpret \(\Cx\) as the set of toposes. Interpret \(\Sb(\Gamma, \Delta)\)
+as the set of geometric morphisms \(\Gamma \leftrightarrows \Delta\), acting as their inverse images.
+Interpret \emph{small} types as objects of \(\Gamma\), and their terms as global elements.
+
+The empty context, of course, is the topos of sets.
+When constructing larger contexts as \(\Gamma, x :_\mu A\), require \(A\) to be small,
+and interpret \(\Gamma, x :_\mu A\) as the slice topos \(\Gamma_{/\mu^*A}\);
+
+Then the constructions of substitutions check out:
+\begin{itemize}
+    \item There's always a unique geometric morphism into \(\mathbf{Set}\).
+    \item Geometric morphisms \(\Xi \leftrightarrows \Gamma_{/\mu^*A}\) correspond to pairs of a geometric morphism \(\sigma : \Xi \leftrightarrows \Gamma\) and a global element \(\hom_\Xi(\mathbf{1},\sigma^*\mu^*A)\).
+    (\url{https://jenshemelaer.com/slice-toposes.pdf} seems to provide a proof, though I haven't checked it.)
+\end{itemize}
+
+You may observe that we can only reach contexts describing slice toposes.
+This can be fixed by allowing large \(A\) in contexts \(\Gamma, x :_\mu A\).
+I'm not sure how to do this properly, but a good example is that
+the context \(X :_{\mathsf{id}} \star\) should be the classifying topos for the theory of objects.
+
+Interpreting \(\Pi\)-types is easy: \((x :_\mu A) \to B\) should be the direct image of the geometric morphism
+given by \(\mathsf{wk} : \Sb((\Gamma, x :_\mu A),\Gamma)\).
+
+
+\section{Consequences}
+
+\subsection{Functoriality of Substitution}
+
+The first thing to check is the functoriality of substitution.
+If we can build a \(B\) from an \(A\), and we have an \(A[\mu]\), we want a \(B[\mu]\).
+
+More formally, if we have \(\sigma : \Sb(\Gamma,\Delta)\),
+and a type \(B : \Ty((\Delta, x :_\mu A))\) and a term \(e : \Tm((\Delta, x :_\mu A), B)\),
+then we want to form a type \(B' : \Ty((\Gamma, x :_{\mu[\sigma]} A))\)
+and a term \(e' : \Tm((\Gamma, x :_{\mu[\sigma]} A), B')\).
+
+It took me embarassingly long to figure this out, but we're simply being asked for a substitution
+\(\Sb((\Gamma, x :_{\mu[\sigma]} A), (\Delta, x :_\mu A))\).
+And we have one. It's given by \((\sigma[\mathsf{wk}],\mathsf{v}_0)\).
+
+\subsection{Application of Substituted Lambdas}
+
+Function application is naturally derived from the characterization of \(\Pi\)-types.
+\[\Tm(\Gamma, (x :_\mu A) \to B) \simeq \Tm((\Gamma, x :_\mu A), B)\]
+
+Running this equivalence forward, we can bring the output back into context \(\Gamma\)
+if we have a substitution \(\Sb(\Gamma, (\Gamma, x :_\mu A))\).
+Which we can construct from the identity \(\mathsf{id} : \Sb(\Gamma,\Gamma)\)
+and a term \(a : \Tm(\Gamma, A[\mu])\).
+
+This yields an application rule.
+\[\inferrule{f : \Tm(\Gamma, (x :_\mu A) \to B) \\ a : \Tm(\Gamma, A[\mu])}{f a : B[\mathsf{id}, a]}\]
+
+So far, this is standard. But we can apply the ideas of previous section, to generalize this rule.
+
+\[\inferrule{\sigma : \Sb(\Xi,\Gamma) \\ f : \Tm(\Xi, ((x :_\mu A) \to B)[\sigma]) \\ a : \Tm(\Xi, A[\mu][\sigma])}{f a : B[\mathsf{id}, a][\sigma]}\]
+
+This allows us to make sense of expressions with a substitution sandwiched in between the lambda and application,
+as in \((\lambda x. e)[\sigma] a\).
+And if you work through the details, you'll find that this evaluates to \(e[\sigma[\mathsf{wk}],\mathsf{v}_0][\mathsf{id}, a] = e[\sigma, a]\).
+
+\pagebreak
+
+\listoftodos
+
+\noindent And more:
+
+\begin{itemize}
+    \item Directed Univalence
+    \item Do Church-encoded datatypes work? Assuming directed univalence, do we get the full induction principles, or just the recursion principles?
+    \begin{itemize}
+        \item If the latter, explore adding datatypes in the typical way. Substitutions should commute past many of them.
+        \item What's the difference between \((X : \mathcal{U}) \to (x : X) \to (y : X) \to X\)
+        and \((X : \mathcal{U}) \to (x : X) \to (y : X[\mathsf{wk}]) \to X[\mathsf{wk}^2]\)?
+    \end{itemize}
+    \item Just generally explore the system.
+    \item Are there good higher-categorical models?
+    \item Citations:
+\end{itemize}
+
+\printbibliography
+
+\end{document}

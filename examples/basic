@@ -1,0 +1,22 @@
+
+-- 0     =    Π X :[id] ★ → X
+-- 1     =    Π X :[id] ★ → Π x :[id] X → X
+-- tt    =    λ X :[id] ★ → λ x :[id] X → x
+-- 2     =    Π X :[id] ★ → Π x :[id] X → Π x :[id.1] X → X
+-- true  =    λ X :[id] ★ → λ x :[id] X → λ y :[id.1] X → x
+-- false =    λ X :[id] ★ → λ x :[id] X → λ y :[id.1] X → y
+
+
+(λ X :[id] ★ → λ x :[id] X → λ y :[id.1] X → x)
+    ★
+    (Π X :[id] ★ → X)
+    (Π X :[id] ★ → Π x :[id] X → X)
+
+
+
+-- TODO: There are so many alternate versions:
+--   Π X :[id] ★ → Π x :[id] X → Π x :[id.1] X → X
+--   Π X :[id] ★ → Π x :[id] X → Π x :[id.1] X → X
+--   Π X :[] ★ → Π x :[X :[id] = X] X → Π x :[X :[id] = X] X → X
+-- What's the difference?
+--   Not the last. If something is intended to work in any context, all substs should start in id.
