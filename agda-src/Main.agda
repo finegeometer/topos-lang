@@ -34,9 +34,8 @@ data Error : Set where
 record CxEntry : Set where
   field
     name : String
-    modality : RawSb
     ty : Raw
-{-# FOREIGN GHC data CxEntry = CxEntry Text MAlonzo.Code.Raw.Sb MAlonzo.Code.Raw.Tm #-}
+{-# FOREIGN GHC data CxEntry = CxEntry Text MAlonzo.Code.Raw.Tm #-}
 {-# COMPILE GHC CxEntry = data CxEntry (CxEntry) #-}
 
 record FullError : Set where
@@ -57,7 +56,7 @@ private
 
   mk-cx-list : {Γ : _} → Tc.Names Γ → List CxEntry
   mk-cx-list Tc.ε = []
-  mk-cx-list (Tc._,_ {μ = μ} {A = A} names x) = record { name = x ; modality = rb-sb μ ; ty = rb-ty A } ∷ mk-cx-list names
+  mk-cx-list (Tc._,_ {A = A} names x) = record { name = x ; ty = rb-ty A } ∷ mk-cx-list names
 
   mk-full-error : (Σ Tc.Error λ _ → Σ Tc.WhenChecking λ _ → Tc.InCx) → FullError
   mk-full-error (err , when , Tc.in-cx cx) = record { err = mk-error err ; when-checking = when ; in-cx = mk-cx-list cx }

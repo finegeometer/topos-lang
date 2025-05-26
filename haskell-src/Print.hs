@@ -10,8 +10,8 @@ ppTm _ Univ = "★"
 ppTm _ (Code x) = "<" ++ ppTm False x ++ ">"
 ppTm _ (SbTm x τ) = ppTm True x ++ "[" ++ ppSb False τ ++ "]"
 ppTm _ (Snd σ) = ppSb True σ ++ ".2"
-ppTm False (Pi x μ t body) = "Π " ++ unpack x ++ " :[" ++ ppSb False μ ++ "] " ++ ppTm False t ++ " → " ++ ppTm False body
-ppTm False (Lam x μ t body) = "λ " ++ unpack x ++ " :[" ++ ppSb False μ ++ "] " ++ ppTm False t ++ " → " ++ ppTm False body
+ppTm False (Pi x t body) = "Π " ++ unpack x ++ " : " ++ ppTm False t ++ " → " ++ ppTm False body
+ppTm False (Lam x t body) = "λ " ++ unpack x ++ " : " ++ ppTm False t ++ " → " ++ ppTm False body
 ppTm False (App f x) = ppTm True f ++ " " ++ ppTm True x
 ppTm True x = "(" ++ ppTm False x ++ ")"
 
@@ -21,6 +21,6 @@ ppSb _ Id = "id"
 ppSb _ Nil = ""
 ppSb _ (SbSb σ τ) = ppSb True σ ++ "[" ++ ppSb False τ ++ "]"
 ppSb _ (Fst σ) = ppSb True σ ++ ".1"
-ppSb False (Cons σ x μ t a) = ppSb False σ ++ ", " ++ unpack x ++ " :[" ++ ppSb False μ ++ "] " ++ ppTm False t ++ " = " ++ ppTm False a
+ppSb False (Cons σ x t a) = ppSb False σ ++ ", " ++ unpack x ++ " : " ++ ppTm False t ++ " = " ++ ppTm False a
 ppSb True σ = "(" ++ ppSb False σ ++ ")"
 

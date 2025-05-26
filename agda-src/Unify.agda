@@ -31,18 +31,17 @@ dec-ty (sb σ univ) (sb σ' univ) =
 dec-ty (el' {σ = σ} t) (el' {σ = σ'} t') =
   dec-sb σ σ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   dec-neu t t' |> map′ (λ {refl → refl}) λ {refl → refl}}
-dec-ty (sb σ pi[ μ ] A , B) (sb σ' pi[ μ' ] A' , B') =
+dec-ty (sb σ pi A , B) (sb σ' pi A' , B') =
   dec-sb σ σ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
-  dec-sb μ μ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   dec-ty A A' |> bind′ (λ {refl → refl}) λ {refl →
-  dec-ty B B' |> map′ (λ {refl → refl}) λ {refl → refl}}}}
+  dec-ty B B' |> map′ (λ {refl → refl}) λ {refl → refl}}}
 
 dec-ty (sb _ univ)          (el' _)              = no λ ()
-dec-ty (sb _ univ)          (sb _ pi[ _ ] _ , _) = no λ ()
+dec-ty (sb _ univ)          (sb _ pi _ , _) = no λ ()
 dec-ty (el' _)              (sb _ univ)          = no λ ()
-dec-ty (el' _)              (sb _ pi[ _ ] _ , _) = no λ ()
-dec-ty (sb _ pi[ _ ] _ , _) (sb _ univ)          = no λ ()
-dec-ty (sb _ pi[ _ ] _ , _) (el' _)              = no λ ()
+dec-ty (el' _)              (sb _ pi _ , _) = no λ ()
+dec-ty (sb _ pi _ , _) (sb _ univ)          = no λ ()
+dec-ty (sb _ pi _ , _) (el' _)              = no λ ()
 
 dec-val (neu a) (neu a') =
   dec-neu a a' |> map′ (λ {refl → refl}) (λ {refl → refl})
@@ -61,31 +60,29 @@ dec-val (sb _ code _) (neu _) = no λ ()
 dec-neu (var' x pf) (var' x' pf') =
   dec-var x x' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}
-dec-neu (sb_app_,_⟨_⟩ {σ = σ} {μ = μ} {A = A} {B = B} τ a b pf) (sb_app_,_⟨_⟩ {σ = σ'} {μ = μ'} {A = A'} {B = B'} τ' a' b' pf') =
+dec-neu (sb_app_,_⟨_⟩ {σ = σ} {A = A} {B = B} τ a b pf) (sb_app_,_⟨_⟩ {σ = σ'} {A = A'} {B = B'} τ' a' b' pf') =
   dec-sb τ τ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   dec-sb σ σ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
-  dec-sb μ μ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   dec-ty A A' |> bind′ (λ {refl → refl}) λ {refl →
   dec-ty B B' |> bind′ (λ {refl → refl}) λ {refl →
   dec-neu a a' |> bind′ (λ {refl → refl}) λ {refl →
   dec-val b b' |> bind′ (λ {refl → refl}) λ {refl →
-  yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}}}}}}}
+  yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}}}}}}
 
 dec-neu (var' _ _) (sb _ app _ , _ ⟨ _ ⟩) = no λ ()
 dec-neu (sb _ app _ , _ ⟨ _ ⟩) (var' _ _) = no λ ()
 
 dec-sb ε ε = yes (refl , refl)
-dec-sb (_,_ {A = A} {μ = μ} σ a) (_,_ {A = A'} {μ = μ'} σ' a') =
+dec-sb (_,_ {A = A} σ a) (_,_ {A = A'} σ' a') =
   dec-sb σ σ' |> bind′ (λ {(refl , refl) → refl , refl}) λ {(refl , refl) →
-  dec-sb μ μ' |> bind′ (λ {(refl , refl) → refl , refl}) λ {(refl , refl) →
   dec-ty A A' |> bind′ (λ {(refl , refl) → refl}) λ {refl →
-  dec-val a a' |> map′ (λ {refl → refl , refl}) λ {(refl , refl) → refl}}}}
+  dec-val a a' |> map′ (λ {refl → refl , refl}) λ {(refl , refl) → refl}}}
 
 dec-sb ε (_ , _) = no λ ()
 dec-sb (_ , _) ε = no λ ()
 
 -- Can easily be proven by reasoning about the lengths of contexts, but that brings in too many imports.
-private postulate ext-not-⊆ : {μ : Sb Γ Δ} → (Γ ,[ μ ] A) ⊆ Γ → ⊥
+private postulate ext-not-⊆ : (Γ , A) ⊆ Γ → ⊥
 
 dec-var refl refl = yes (refl , refl)
 dec-var (step p) (step p') = dec-var p p' |> map′ (λ {(refl , refl) → refl , refl}) λ {(refl , refl) → refl , refl}

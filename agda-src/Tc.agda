@@ -17,7 +17,7 @@ private variable
 
 data Names : Cx → Set where
   ε : Names ε
-  _,_ : {Γ Δ : Cx} {μ : Sb Γ Δ} {A : Ty Δ} → Names Γ → String → Names (Γ ,[ μ ] A)
+  _,_ : {A : Ty Γ} → Names Γ → String → Names (Γ , A)
 
 open import Data.Product using (_,_; _×_; ∃-syntax)
 
@@ -86,26 +86,24 @@ tc-val names (a [ σ ]) = do
   _ , names , σ ← tc-sb names σ
   A , a ← tc-val names a
   pure (sb-ty σ A , sb-val σ a)
-tc-val names (Π x :[ μ ] A , B) = do
-  _ , names' , μ ← tc-sb names μ
-  A ← tc-ty names' A
+tc-val names (Π x ∶ A , B) = do
+  A ← tc-ty names A
   B ← tc-ty (names , x) B
-  pure (sb Lang.id univ , sb Lang.id code (sb Lang.id pi[ μ ] A , B))
-tc-val names (lam x :[ μ ] A , body) = do
-  _ , names' , μ ← tc-sb names μ
-  A ← tc-ty names' A
+  pure (sb Lang.id univ , sb Lang.id code (sb Lang.id pi A , B))
+tc-val names (lam x ∶ A , body) = do
+  A ← tc-ty names A
   B , body ← tc-val (names , x) body
-  pure ((sb Lang.id pi[ μ ] A , B) , sb Lang.id lam body)
+  pure ((sb Lang.id pi A , B) , sb Lang.id lam body)
 tc-val names (e₁ ＠ e₂) = do
-  (sb σ pi[ μ ] A , B) , f ← tc-val names e₁
+  (sb σ pi A , B) , f ← tc-val names e₁
     where _ , x → err (not-a-function x) (when-tm (e₁ ＠ e₂)) (in-cx names)
   A' , a ← tc-val names e₂
-  refl ← unify (sb-ty (sb-sb σ μ) A) A' (when-tm (e₁ ＠ e₂)) (in-cx names)
+  refl ← unify (sb-ty σ A) A' (when-tm (e₁ ＠ e₂)) (in-cx names)
   pure (sb-ty (σ , a) B , apply f a)
 tc-val names (π₂ σ) = do
-  (_ ,[ μ ] A) , _ , (σ , a) ← tc-sb names σ
+  (_ , A) , _ , (σ , a) ← tc-sb names σ
     where _ → err cx-is-empty (when-tm (π₂ σ)) (in-cx names)
-  pure (sb-ty (sb-sb σ μ) A , a)
+  pure (sb-ty σ A , a)
 
 
 tc-sb names RawSb.id = pure (_ , names , Lang.id)
@@ -114,13 +112,12 @@ tc-sb names (σ [ τ ]) = do
   _ , names , τ ← tc-sb names τ
   pure (_ , names , sb-sb σ τ)
 tc-sb names ε = pure (ε , ε , ε)
-tc-sb names sb@(σ , x :[ μ ] A := a) = do
+tc-sb names sb@(σ , x ∶ A := a) = do
   _ , names' , σ ← tc-sb names σ
-  _ , names'' , μ ← tc-sb names' μ
-  stated-type ← tc-ty names'' A
+  stated-type ← tc-ty names' A
   inferred-type , a ← tc-val names a
-  refl ← unify inferred-type (sb-ty (sb-sb σ μ) stated-type) (when-sb sb) (in-cx names)
-  pure ((_ ,[ μ ] stated-type) , (names' , x) , (σ , a))
+  refl ← unify inferred-type (sb-ty σ stated-type) (when-sb sb) (in-cx names)
+  pure ((_ , stated-type) , (names' , x) , (σ , a))
 tc-sb names (π₁ σ) = do
   _ , (names' , _) , (σ , _) ← tc-sb names σ
     where _ → err cx-is-empty (when-sb (π₁ σ)) (in-cx names)

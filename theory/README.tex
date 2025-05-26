@@ -145,15 +145,15 @@ The language is specified as follows.
     \item A few specific contexts, characterized by their mapping-in behavior.
     \begin{mathpar}
         \inferrule{ }{\Gamma : \Cx}
-        \and \inferrule{\Gamma,\Delta : \Cx \\ \mu : \Sb(\Gamma,\Delta) \\ A : \Ty(\Delta)}{(\Gamma, x :_\mu A) : \Cx}
+        \and \inferrule{\Gamma,\Delta : \Cx \\ A : \Ty(\Gamma)}{(\Gamma, x : A) : \Cx}
         \\ \Sb(\Xi,\epsilon) \simeq \mathbf{1}
-        \and \Sb(\Xi,\Gamma, x :_\mu A) \simeq (\sigma : \Sb(\Xi,\Gamma)) \times \Tm(\Xi,A[\mu][\sigma])
+        \and \Sb(\Xi,(\Gamma, x : A)) \simeq (\sigma : \Sb(\Xi,\Gamma)) \times \Tm(\Xi,A[\sigma])
         \\ ()[\sigma] = ()
         \and (\tau,a)[\sigma] = \tau[\sigma],a[\sigma]
     \end{mathpar}
     \begin{itemize}
         \item In those last two equations, the computation rules for composition of substitutions,
-        I conflate \(\Sb(\Xi,\epsilon)\) with \(\mathbf{1}\), and similarly for \(\Sb(\Xi,\Gamma, x :_\mu A)\).
+        I conflate \(\Sb(\Xi,\epsilon)\) with \(\mathbf{1}\), and similarly for \(\Sb(\Xi,(\Gamma, x : A))\).
         I continue to do so throughout this writeup.
         \item Somewhat surprisingly, the above rules implicitly introduce the concept of variables.
         The identity substitution on any nonempty context decomposes as \(\mathsf{id} = (\mathsf{wk},\mathsf{v}_0)\),
@@ -166,14 +166,14 @@ The language is specified as follows.
     only make sense after implicitly casting by the equivalences above them.)
     \item Finally, we introduce \(\Pi\)-types and universes, along with characterizations of their terms.
     \begin{mathpar}
-        \inferrule{\mu : \Sb(\Gamma,\Delta) \\ A : \Ty(\Delta) \\ B : \Ty(\Gamma, x :_\mu A)}{((x :_\mu A) \to B) : \Ty(\Gamma)}
+        \inferrule{A : \Ty(\Gamma) \\ B : \Ty(\Gamma, x : A)}{((x : A) \to B) : \Ty(\Gamma)}
         \and \inferrule{ }{\mathcal{U} : \Ty(\Gamma)}
-        \\ \Tm(\Gamma, (x :_\mu A) \to B) \simeq \Tm((\Gamma, x :_\mu A), B)
+        \\ \Tm(\Gamma, (x : A) \to B) \simeq \Tm((\Gamma, x : A), B)
         \and \Tm(\Gamma, \mathcal{U}) \simeq \Ty(\Gamma)
     \end{mathpar}
     \begin{itemize}
         \item We assume \emph{nothing} about the interaction of these types with substitution.
-        There are no commutation rules; \(((x :_\mu A) \to B)[\sigma]\) is unrelated to anything of the form \((x :_{\dots} A[\dots]) \to B[\dots]\).
+        There are no commutation rules; \(((x : A) \to B)[\sigma]\) is unrelated to anything of the form \((x : A[\dots]) \to B[\dots]\).
     \end{itemize}
 \end{itemize}
 
@@ -186,57 +186,55 @@ as the set of geometric morphisms \(\Gamma \leftrightarrows \Delta\), acting as 
 Interpret \emph{small} types as objects of \(\Gamma\), and their terms as global elements.
 
 The empty context, of course, is the topos of sets.
-When constructing larger contexts as \(\Gamma, x :_\mu A\), require \(A\) to be small,
-and interpret \(\Gamma, x :_\mu A\) as the slice topos \(\Gamma_{/\mu^*A}\);
+When constructing larger contexts as \(\Gamma, x : A\), require \(A\) to be small,
+and interpret \(\Gamma, x : A\) as the slice topos \(\Gamma_{/A}\).
 
 Then the constructions of substitutions check out:
 \begin{itemize}
     \item There's always a unique geometric morphism into \(\mathbf{Set}\).
-    \item Geometric morphisms \(\Xi \leftrightarrows \Gamma_{/\mu^*A}\) correspond to pairs of a geometric morphism \(\sigma : \Xi \leftrightarrows \Gamma\) and a global element \(\hom_\Xi(\mathbf{1},\sigma^*\mu^*A)\).
+    \item Geometric morphisms \(\Xi \leftrightarrows \Gamma_{/A}\) correspond to pairs consisting of a geometric morphism \(\sigma : \Xi \leftrightarrows \Gamma\) and a global element \(\hom_\Xi(\mathbf{1},\sigma^*A)\).
     (\url{https://jenshemelaer.com/slice-toposes.pdf} seems to provide a proof, though I haven't checked it.)
 \end{itemize}
 
 You may observe that we can only reach contexts describing slice toposes.
-This can be fixed by allowing large \(A\) in contexts \(\Gamma, x :_\mu A\).
-I'm not sure how to do this properly, but a good example is that
-the context \(X :_{\mathsf{id}} \star\) should be the classifying topos for the theory of objects.
+This can be fixed by allowing large \(A\) in contexts \(\Gamma, x : A\).
+I'm not sure how to do this properly, but at least \(\Gamma, x : \star\) ought to be the product in \(\mathbf{Topos}\)
+of \(\Gamma\) and the classifying topos for the theory of objects.
 
-Interpreting \(\Pi\)-types is easy: \((x :_\mu A) \to B\) should be the direct image of the geometric morphism
-given by \(\mathsf{wk} : \Sb((\Gamma, x :_\mu A),\Gamma)\).
-
+Interpreting \(\Pi\)-types is easy: \((x : A) \to B\) should be the direct image of \(B\) under the geometric morphism \(\mathsf{wk} : \Sb((\Gamma, x : A),\Gamma)\).
 
 \section{Consequences}
 
 \subsection{Functoriality of Substitution}
 
 The first thing to check is the functoriality of substitution.
-If we can build a \(B\) from an \(A\), and we have an \(A[\mu]\), we want a \(B[\mu]\).
+If we can build a \(B\) from an \(A\), and we have an \(A[\sigma]\), we want a \(B[\sigma]\).
 
 More formally, if we have \(\sigma : \Sb(\Gamma,\Delta)\),
-and a type \(B : \Ty((\Delta, x :_\mu A))\) and a term \(e : \Tm((\Delta, x :_\mu A), B)\),
-then we want to form a type \(B' : \Ty((\Gamma, x :_{\mu[\sigma]} A))\)
-and a term \(e' : \Tm((\Gamma, x :_{\mu[\sigma]} A), B')\).
+and a type \(B : \Ty((\Delta, x : A))\) and a term \(e : \Tm((\Delta, x : A), B)\),
+then we want to form a type \(B' : \Ty((\Gamma, x : A[\sigma]))\)
+and a term \(e' : \Tm((\Gamma, x : A[\sigma]), B')\).
 
 It took me embarassingly long to figure this out, but we're simply being asked for a substitution
-\(\Sb((\Gamma, x :_{\mu[\sigma]} A), (\Delta, x :_\mu A))\).
+\(\Sb((\Gamma, x : A[\sigma]), (\Delta, x : A))\).
 And we have one. It's given by \((\sigma[\mathsf{wk}],\mathsf{v}_0)\).
 
 \subsection{Application of Substituted Lambdas}
 
 Function application is naturally derived from the characterization of \(\Pi\)-types.
-\[\Tm(\Gamma, (x :_\mu A) \to B) \simeq \Tm((\Gamma, x :_\mu A), B)\]
+\[\Tm(\Gamma, (x : A) \to B) \simeq \Tm((\Gamma, x : A), B)\]
 
 Running this equivalence forward, we can bring the output back into context \(\Gamma\)
-if we have a substitution \(\Sb(\Gamma, (\Gamma, x :_\mu A))\).
+if we have a substitution \(\Sb(\Gamma, (\Gamma, x : A))\).
 Which we can construct from the identity \(\mathsf{id} : \Sb(\Gamma,\Gamma)\)
-and a term \(a : \Tm(\Gamma, A[\mu])\).
+and a term \(a : \Tm(\Gamma, A)\).
 
 This yields an application rule.
-\[\inferrule{f : \Tm(\Gamma, (x :_\mu A) \to B) \\ a : \Tm(\Gamma, A[\mu])}{f a : B[\mathsf{id}, a]}\]
+\[\inferrule{f : \Tm(\Gamma, (x : A) \to B) \\ a : \Tm(\Gamma, A)}{f a : B[\mathsf{id}, a]}\]
 
 So far, this is standard. But we can apply the ideas of previous section, to generalize this rule.
 
-\[\inferrule{\sigma : \Sb(\Xi,\Gamma) \\ f : \Tm(\Xi, ((x :_\mu A) \to B)[\sigma]) \\ a : \Tm(\Xi, A[\mu][\sigma])}{f a : B[\mathsf{id}, a][\sigma]}\]
+\[\inferrule{\sigma : \Sb(\Xi,\Gamma) \\ f : \Tm(\Xi, ((x : A) \to B)[\sigma]) \\ a : \Tm(\Xi, A[\sigma])}{f a : B[\sigma, a]}\]
 
 This allows us to make sense of expressions with a substitution sandwiched in between the lambda and application,
 as in \((\lambda x. e)[\sigma] a\).
@@ -253,8 +251,6 @@ And if you work through the details, you'll find that this evaluates to \(e[\sig
     \item Do Church-encoded datatypes work? Assuming directed univalence, do we get the full induction principles, or just the recursion principles?
     \begin{itemize}
         \item If the latter, explore adding datatypes in the typical way. Substitutions should commute past many of them.
-        \item What's the difference between \((X : \mathcal{U}) \to (x : X) \to (y : X) \to X\)
-        and \((X : \mathcal{U}) \to (x : X) \to (y : X[\mathsf{wk}]) \to X[\mathsf{wk}^2]\)?
     \end{itemize}
     \item Just generally explore the system.
     \item Are there good higher-categorical models?

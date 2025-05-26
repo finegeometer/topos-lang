@@ -89,6 +89,7 @@ data ParseError
   | PiLamFailed String
   | BadSbElt String
   | BadSbHead
+  | UnrecognizedTerm String
 
 split :: (a -> Bool) -> [a] -> [[a]]
 split p [] = [[]]
@@ -101,8 +102,8 @@ parseTm (break (\case Bracket BPi _ -> True; Bracket BLam _ -> True; _ -> False)
     [] -> case ts1 of
       [] -> Left EmptyTm
       _ -> pure ts1
-    Bracket BPi  (Token (Ident x) : Suffix (Token (Other ':')) (Subst μ) : t) : body -> fmap (\x->ts1++[x]) (liftM3 (Pi  (pack x)) (parseSb μ) (parseTm t) (parseTm body))
-    Bracket BLam (Token (Ident x) : Suffix (Token (Other ':')) (Subst μ) : t) : body -> fmap (\x->ts1++[x]) (liftM3 (Lam (pack x)) (parseSb μ) (parseTm t) (parseTm body))
+    Bracket BPi  (Token (Ident x) : Token (Other ':') : t) : body -> fmap (\x->ts1++[x]) (liftM2 (Pi  (pack x)) (parseTm t) (parseTm body))
+    Bracket BLam (Token (Ident x) : Token (Other ':') : t) : body -> fmap (\x->ts1++[x]) (liftM2 (Lam (pack x)) (parseTm t) (parseTm body))
     forest -> Left (PiLamFailed (show forest))
 
 parseTm' :: TokenTree -> Either ParseError Tm
@@ -112,6 +113,7 @@ parseTm' (Token (Ident x)) = pure (Var (pack x))
 parseTm' (Token (Other '★')) = pure Univ
 parseTm' (Suffix σ (Dot (Token (Ident "2")))) = fmap Snd (parseSb' σ)
 parseTm' (Suffix a (Subst τ)) = liftM2 SbTm (parseTm' a) (parseSb τ)
+parseTm' tokens = Left (UnrecognizedTerm (show tokens))
 
 parseSb :: TokenForest -> Either ParseError Sb
 parseSb forest =
@@ -121,9 +123,9 @@ parseSb forest =
       [σ]:tl -> (parseSb' σ, tl)
       hd:tl -> (pure Nil, hd:tl)
   in
-    liftM2 (foldl (\σ (x,μ,t,a) -> Cons σ x μ t a)) hd $ forM tl $ \case
-      Token (Ident x) : Suffix (Token (Other ':')) (Subst μ) : (break (\case Token (Other '=') -> True; _ -> False) -> (t, Token (Other '=') : a)) ->
-        liftM3 (pack x,,,) (parseSb μ) (parseTm t) (parseTm a)
+    liftM2 (foldl (\σ (x,t,a) -> Cons σ x t a)) hd $ forM tl $ \case
+      Token (Ident x) : Token (Other ':') : (break (\case Token (Other '=') -> True; _ -> False) -> (t, Token (Other '=') : a)) ->
+        liftM2 (pack x,,) (parseTm t) (parseTm a)
       forest -> Left (BadSbElt (show forest))
 
 parseSb' :: TokenTree -> Either ParseError Sb

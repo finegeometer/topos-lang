@@ -25,6 +25,7 @@ ppErr (ParseError (Parse.WhileParsing Parse.EmptyTm)) = "Parsing failed: Tried t
 ppErr (ParseError (Parse.WhileParsing (Parse.PiLamFailed x))) = "Parsing failed: Incorrectly structured Π or λ term.\n  " ++ x ++ "\n"
 ppErr (ParseError (Parse.WhileParsing (Parse.BadSbElt x))) = "Parsing failed: Incorrectly structured substitution (after first comma).\n  " ++ x ++ "\n"
 ppErr (ParseError (Parse.WhileParsing Parse.BadSbHead)) = "Parsing failed: Incorrectly structured substitution (before first comma).\n"
+ppErr (ParseError (Parse.WhileParsing (Parse.UnrecognizedTerm x))) = "Parsing failed: Unrecognized term.\n  " ++ x ++ "\n"
 ppErr (TypeError (Tc.FullError err when cx)) = concat
   [ case err of
       Tc.FailedToUnify t1 t2 -> "Failed to unify the following expressions:\n  " ++ ppTm False t1 ++ "\n  " ++ ppTm False t2
@@ -38,7 +39,7 @@ ppErr (TypeError (Tc.FullError err when cx)) = concat
     Tc.WhenCheckingSb sb -> "substitution: \n  " ++ ppSb False sb
   , "\n\n"
   , "In the following context:\n"
-  , concatMap (\(Tc.CxEntry x μ t) -> "  " ++ unpack x ++ " :[" ++ ppSb False μ ++ "] " ++ ppTm False t ++ "\n") (reverse cx)
+  , concatMap (\(Tc.CxEntry x t) -> "  " ++ unpack x ++ " : " ++ ppTm False t ++ "\n") (reverse cx)
   ]
 
 main :: IO ExitCode
