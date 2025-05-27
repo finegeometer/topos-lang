@@ -2,7 +2,7 @@
 
 In this research project, I design and implement a type system that displays aspects of modal and directed type theories, at no more theoretical complexity cost than Martin Löf type theory.
 
-For the theory, see `theory/README.pdf`
+For the theory, see [theory/theory.pdf](theory/theory.pdf).
 
 As this is a research project, no thought has been put toward efficiency of implementation, only towards design, simplicity, and correctness.
 
