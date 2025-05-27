@@ -44,4 +44,6 @@ To compile; run `sh build.sh`. The resulting binary will be called `Main`, and p
 
 - Comments are delimited by `--`, and last until the end of the line.
 
+## Eta
 
+The implementation does not support eta-equivalence checking. It does, however, support the commutation of substitutions with eliminators, which I present in the theory as a consequence of eta.
