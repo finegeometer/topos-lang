@@ -99,7 +99,7 @@ tc-val names (e₁ ＠ e₂) = do
     where _ , x → err (not-a-function x) (when-tm (e₁ ＠ e₂)) (in-cx names)
   A' , a ← tc-val names e₂
   refl ← unify (sb-ty σ A) A' (when-tm (e₁ ＠ e₂)) (in-cx names)
-  pure (sb-ty (σ , a) B , apply f a)
+  pure (sb-ty (σ , a) B , app f a)
 tc-val names (π₂ σ) = do
   (_ , A) , _ , (σ , a) ← tc-sb names σ
     where _ → err cx-is-empty (when-tm (π₂ σ)) (in-cx names)

@@ -22,7 +22,7 @@ rb-val (sb_lam_ {A = A} σ body) = (lam "_" ∶ rb-ty A , rb-val body) [ rb-sb �
 rb-val (sb σ code A) = code (rb-ty A) [ rb-sb σ ]
 
 rb-neu (var' x _) = π₂ (rb-wk x)
-rb-neu sb σ app f , a ⟨ _ ⟩ = (rb-neu f ＠ rb-val a) [ rb-sb σ ]
+rb-neu app' f , a ⟨ _ ⟩ = rb-neu f ＠ rb-val a
 
 rb-sb ε = ε
 rb-sb {Δ = Δ , A} (_,_ σ a) = rb-sb σ , "_" ∶ rb-ty A := rb-val a

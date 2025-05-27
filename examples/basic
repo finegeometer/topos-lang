@@ -1,4 +1,4 @@
--- Examples: Uncomment one of these lines, then run `./Main`.
+-- Examples: Uncomment one of these lines, then pipe this file into `./Main`.
 
 -- Π X : ★ → X                                 -- 0
 -- Π X : ★ → Π x : X → X                       -- 1

@@ -60,17 +60,16 @@ dec-val (sb _ code _) (neu _) = no λ ()
 dec-neu (var' x pf) (var' x' pf') =
   dec-var x x' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}
-dec-neu (sb_app_,_⟨_⟩ {σ = σ} {A = A} {B = B} τ a b pf) (sb_app_,_⟨_⟩ {σ = σ'} {A = A'} {B = B'} τ' a' b' pf') =
-  dec-sb τ τ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
+dec-neu (app'_,_⟨_⟩ {σ = σ} {A = A} {B = B} a b pf) (app'_,_⟨_⟩ {σ = σ'} {A = A'} {B = B'} a' b' pf') =
   dec-sb σ σ' |> bind′ (λ {refl → refl , refl}) λ {(refl , refl) →
   dec-ty A A' |> bind′ (λ {refl → refl}) λ {refl →
   dec-ty B B' |> bind′ (λ {refl → refl}) λ {refl →
   dec-neu a a' |> bind′ (λ {refl → refl}) λ {refl →
   dec-val b b' |> bind′ (λ {refl → refl}) λ {refl →
-  yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}}}}}}
+  yes (≡-irrelevant pf pf') |> map′ (λ {refl → refl}) λ {refl → refl}}}}}}
 
-dec-neu (var' _ _) (sb _ app _ , _ ⟨ _ ⟩) = no λ ()
-dec-neu (sb _ app _ , _ ⟨ _ ⟩) (var' _ _) = no λ ()
+dec-neu (var' _ _) (app' _ , _ ⟨ _ ⟩) = no λ ()
+dec-neu (app' _ , _ ⟨ _ ⟩) (var' _ _) = no λ ()
 
 dec-sb ε ε = yes (refl , refl)
 dec-sb (_,_ {A = A} σ a) (_,_ {A = A'} σ' a') =

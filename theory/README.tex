@@ -99,7 +99,7 @@ and \(\Pi x : A[\sigma]. B[\sigma[\mathbf{wk}], x]\) don't have the same interpr
 But do we need them to?
 
 Let's simply \emph{remove} the commutation rules.
-Substitutions will no longer commute through \(\Pi\)-types, lambdas, or function application.
+Substitutions will no longer commute through \(\Pi\)-types or lambdas.
 To compensate, we generalize \(\beta\)-reduction to handle the case
 where a substitution is sandwiched between the lambda and the application.
 
@@ -164,16 +164,29 @@ The language is specified as follows.
     \end{itemize}
     (Those last two equations, the computation rules for composition of substitutions,
     only make sense after implicitly casting by the equivalences above them.)
-    \item Finally, we introduce \(\Pi\)-types and universes, along with characterizations of their terms.
-    \begin{mathpar}
-        \inferrule{A : \Ty(\Gamma) \\ B : \Ty(\Gamma, x : A)}{((x : A) \to B) : \Ty(\Gamma)}
-        \and \inferrule{ }{\mathcal{U} : \Ty(\Gamma)}
-        \\ \Tm(\Gamma, (x : A) \to B) \simeq \Tm((\Gamma, x : A), B)
-        \and \Tm(\Gamma, \mathcal{U}) \simeq \Ty(\Gamma)
-    \end{mathpar}
+    \item Finally, we introduce the type constructors, along with their introduction and elimination forms.
+    The eliminators' inference rules are set up so they can act on substituted types; the introduction rules are as normal.
+
+    Notably, we assume \emph{nothing} about how these interact with substitution.
+
+    \todo{Is there a nicer (categorical?) explanation of these rules? It reminds me of the ``lax'' behavior found in higher category theory, but I wasn't able to figure it out.}
     \begin{itemize}
-        \item We assume \emph{nothing} about the interaction of these types with substitution.
-        There are no commutation rules; \(((x : A) \to B)[\sigma]\) is unrelated to anything of the form \((x : A[\dots]) \to B[\dots]\).
+        \item \(\Pi\)-types:
+        \begin{mathpar}
+            \inferrule{A : \Ty(\Gamma) \\ B : \Ty(\Gamma, x : A)}{((x : A) \to B) : \Ty(\Gamma)}
+            \and \inferrule{e : \Tm((\Gamma, x : A), B)}{\lambda x. e : \Tm(\Gamma, (x : A) \to B)}
+            \and \inferrule{\sigma : \Sb(\Xi,\Gamma) \\ f : \Tm(\Xi, ((x : A) \to B)[\sigma])}{\lambda^{-1} x. f : \Tm((\Xi, x : A[\sigma]), B[\sigma[\mathsf{wk}],\mathsf{v}_0])}
+            \\ \lambda^{-1} x. (\lambda x. e)[\sigma] \equiv e[\sigma[\mathsf{wk}], \mathsf{v}_0]
+            \and f \equiv \lambda x. \lambda^{-1} x. f
+        \end{mathpar}
+        \item Universes:
+        \begin{mathpar}
+            \inferrule{ }{\mathcal{U} : \Ty(\Gamma)}
+            \and \inferrule{A : \Ty(\Gamma)}{\mathsf{code}\,A : \Tm(\Gamma, \mathcal{U})}
+            \and \inferrule{\sigma : \Sb(\Xi,\Gamma) \\ t : \Tm(\Xi, \mathcal{U}[\sigma])}{\mathsf{El}\,t : \Ty(\Xi)}
+            \\ \mathsf{El}\,(\mathsf{code}\,A)[\sigma] \equiv A[\sigma]
+            \and t \equiv \mathsf{code}\,\mathsf{El}\,t. t
+        \end{mathpar}
     \end{itemize}
 \end{itemize}
 
@@ -205,6 +218,27 @@ Interpreting \(\Pi\)-types is easy: \((x : A) \to B\) should be the direct image
 
 \section{Consequences}
 
+\subsection{Substitution And Eliminators}
+
+By design, substitution does not commute through \(\Pi\)-types or \(\lambda\)-expressions.
+However, it \emph{does} commute through \(\lambda^{-1}\), as a consequence of the \(\beta\) and \(\eta\) rules.
+\[(\lambda^{-1} x. f)[\sigma[\mathsf{wk}],\mathsf{v}_0]
+= \lambda^{-1} x. (\lambda x. (\lambda^{-1} x. f))[\sigma]
+= \lambda^{-1} x. f[\sigma]
+\]
+
+When we derive function application from \(\lambda^{-1}\) in the usual way, we see that substitution commutes through it too.
+\[f a = (\lambda^{-1} x. f)[\mathsf{id},a]\]
+\begin{align*}
+    (f a)[\tau] &= (\lambda^{-1} x. f)[\mathsf{id},a][\tau]
+    \\ &= (\lambda^{-1} x. f)[\tau,a[\tau]]
+    \\ &= (\lambda^{-1} x. f)[\tau[\mathsf{wk}],\mathsf{v}_0][\mathsf{id},a[\tau]]
+    \\ &= (\lambda^{-1} x. f[\tau])[\mathsf{id},a[\tau]]
+    \\ &= f[\tau] a[\tau]
+\end{align*}
+
+By similar logic, substitution commutes through \(\mathsf{El}\).
+
 \subsection{Functoriality of Substitution}
 
 The first thing to check is the functoriality of substitution.
@@ -218,27 +252,6 @@ and a term \(e' : \Tm((\Gamma, x : A[\sigma]), B')\).
 It took me embarassingly long to figure this out, but we're simply being asked for a substitution
 \(\Sb((\Gamma, x : A[\sigma]), (\Delta, x : A))\).
 And we have one. It's given by \((\sigma[\mathsf{wk}],\mathsf{v}_0)\).
-
-\subsection{Application of Substituted Lambdas}
-
-Function application is naturally derived from the characterization of \(\Pi\)-types.
-\[\Tm(\Gamma, (x : A) \to B) \simeq \Tm((\Gamma, x : A), B)\]
-
-Running this equivalence forward, we can bring the output back into context \(\Gamma\)
-if we have a substitution \(\Sb(\Gamma, (\Gamma, x : A))\).
-Which we can construct from the identity \(\mathsf{id} : \Sb(\Gamma,\Gamma)\)
-and a term \(a : \Tm(\Gamma, A)\).
-
-This yields an application rule.
-\[\inferrule{f : \Tm(\Gamma, (x : A) \to B) \\ a : \Tm(\Gamma, A)}{f a : B[\mathsf{id}, a]}\]
-
-So far, this is standard. But we can apply the ideas of previous section, to generalize this rule.
-
-\[\inferrule{\sigma : \Sb(\Xi,\Gamma) \\ f : \Tm(\Xi, ((x : A) \to B)[\sigma]) \\ a : \Tm(\Xi, A[\sigma])}{f a : B[\sigma, a]}\]
-
-This allows us to make sense of expressions with a substitution sandwiched in between the lambda and application,
-as in \((\lambda x. e)[\sigma] a\).
-And if you work through the details, you'll find that this evaluates to \(e[\sigma[\mathsf{wk}],\mathsf{v}_0][\mathsf{id}, a] = e[\sigma, a]\).
 
 \pagebreak
 
@@ -254,7 +267,7 @@ And if you work through the details, you'll find that this evaluates to \(e[\sig
     \end{itemize}
     \item Just generally explore the system.
     \item Are there good higher-categorical models?
-    \item Citations:
+    \item Citations
 \end{itemize}
 
 \printbibliography

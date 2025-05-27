@@ -77,13 +77,17 @@ data Val where
 
 data Neu where
   var' : (x : (Γ , A) ⊆ Δ) → Z ≡ sb-ty (wk (step x)) A → Neu Δ Z
-  sb_app_,_⟨_⟩ : (τ : Sb Ξ Γ) → Neu Γ (sb σ pi A , B) → (a : Val Γ (sb-ty σ A)) → Z ≡ sb-ty (sb-sb τ (σ , a)) B → Neu Ξ Z
+  app'_,_⟨_⟩ : Neu Γ (sb σ pi A , B) → (a : Val Γ (sb-ty σ A)) → Z ≡ sb-ty (σ , a) B → Neu Γ Z
 
 --------------------------------------------------------------------------------
 
 el : Val Γ (sb σ univ) → Ty Γ
 el (neu t) = el' t
 el (sb σ code A) = sb-ty σ A
+
+app : Val Γ (sb σ pi A , B) → (a : Val Γ (sb-ty σ A)) → Val Γ (sb-ty (σ , a) B)
+app (neu f) a = neu app' f , a ⟨ trustMe ⟩
+app (sb σ lam body) a = sb-val (σ , a) body
 
 var x = neu (var' x refl)
 
@@ -98,7 +102,7 @@ sb-val σ (neu x) = sb-neu σ x
 sb-val σ (sb τ lam body) = sb sb-sb σ τ lam body
 sb-val σ (sb τ code t) = sb sb-sb σ τ code t
 sb-neu σ (var' x refl) = sb-var σ x
-sb-neu σ (sb τ app fun , arg ⟨ refl ⟩) = neu (sb sb-sb σ τ app fun , arg ⟨ trustMe ⟩)
+sb-neu σ (app' fun , arg ⟨ refl ⟩) = unsafeCoerce (Val _) _ _ (app (sb-neu σ fun) (unsafeCoerce (Val _) _ _ (sb-val σ arg)))
 
 --------------------------------------------------------------------------------
 
@@ -112,11 +116,3 @@ sb-var {A = A} σ x with weaken x σ
   (sb-ty τ A)
   (sb-ty σ (sb-ty (wk (step x)) A))
   out
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-apply : Val Γ (sb σ pi A , B) → (a : Val Γ (sb-ty σ A)) → Val Γ (sb-ty (σ , a) B)
-apply (neu f) a = neu sb id app f , a ⟨ trustMe ⟩
-apply (sb σ lam body) a = sb-val (σ , a) body
