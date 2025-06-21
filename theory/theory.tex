@@ -167,7 +167,7 @@ The language is specified as follows. Only the last bullet point is different fr
     \item Finally, we introduce the type constructors, along with their introduction and elimination forms.
     The eliminators' inference rules are set up so they can act on substituted types; the introduction rules are as normal.
 
-    Notably, we assume \emph{nothing} about how these interact with substitution.
+    Notably, we assume \emph{nothing} about how these interact with substitution. It turns out to be provable that substitution commutes through the elimination rules anyway, but this is not true for the introduction rules or type constructors.
 
     \todo{Is there a nicer (categorical?) explanation of these rules? It reminds me of the ``lax'' behavior found in higher category theory, but I wasn't able to figure it out.}
     \begin{itemize}
@@ -185,36 +185,42 @@ The language is specified as follows. Only the last bullet point is different fr
             \and \inferrule{A : \Ty(\Gamma)}{\mathsf{code}\,A : \Tm(\Gamma, \mathcal{U})}
             \and \inferrule{\sigma : \Sb(\Xi,\Gamma) \\ t : \Tm(\Xi, \mathcal{U}[\sigma])}{\mathsf{El}\,t : \Ty(\Xi)}
             \\ \mathsf{El}\,(\mathsf{code}\,A)[\sigma] \equiv A[\sigma]
-            \and t \equiv \mathsf{code}\,\mathsf{El}\,t. t
+            \and t \equiv \mathsf{code}(\mathsf{El}\,t)
         \end{mathpar}
     \end{itemize}
 \end{itemize}
 
 \subsection{Topos Interpretation}
 
-To get an \emph{interesting} interpretation into toposes, we should be more careful about universe levels.
+If we're careful about universe levels, the type theory interprets usefully into toposes.
 
 Interpret \(\Cx\) as the set of toposes. Interpret \(\Sb(\Gamma, \Delta)\)
-as the set of geometric morphisms \(\Gamma \leftrightarrows \Delta\), acting as their inverse images.
+as the set of geometric morphisms \(\Gamma \leftrightarrows \Delta\).
+
 Interpret \emph{small} types as objects of \(\Gamma\), and their terms as global elements.
+Interpret \emph{large} types as toposes over \(\Gamma\), and their terms as sections.
+The inclusion of small types into large types becomes the map from objects \(A \in \Gamma\) to their corresponding slice toposes \(\Gamma_{/A}\).
+
+Substitutions act on small types by their inverse images, and on large types by pullback in \(\mathbf{Topos}\).
+Similarly for terms.
 
 The empty context, of course, is the topos of sets.
-When constructing larger contexts as \(\Gamma, x : A\), require \(A\) to be small,
-and interpret \(\Gamma, x : A\) as the slice topos \(\Gamma_{/A}\).
+The interpretation of a larger context \(\Gamma, x : A\) is the same as the interpretation of \(A\), viewed as a large type.
+The equations describing substitutions follow after a bit of diagram chasing.
 
-Then the constructions of substitutions check out:
+For \(\Pi\)-types, we need to be careful about size.
+Let \(A : \Ty(\Gamma)\) and \(B : \Ty(\Gamma,A)\).
 \begin{itemize}
-    \item There's always a unique geometric morphism into \(\mathbf{Set}\).
-    \item Geometric morphisms \(\Xi \leftrightarrows \Gamma_{/A}\) correspond to pairs consisting of a geometric morphism \(\sigma : \Xi \leftrightarrows \Gamma\) and a global element \(\hom_\Xi(\mathbf{1},\sigma^*A)\).
-    (\url{https://jenshemelaer.com/slice-toposes.pdf} seems to provide a proof, though I haven't checked it.)
+    \item When \(B\) is small, allow \(A\) to be large. Then \((x : A) \to B\) is a small type, interpreted as the direct image of \(B\) under the geometric morphism \(\mathsf{wk} : \Sb((\Gamma, x : A),\Gamma)\).
+    \item When \(B\) is large, so is \((x : A) \to B\). We interpret it as the dependent product in \(\mathbf{Topos}\) along the topos map \(A \to \Gamma\), applied to \(B\).
+
+    This exists when the morphism \(A \to \Gamma\) is exponentiable.
+    In particular, since slice toposes are exponentiable, we are able to interpret \((x : A) \to B\) whenever \(A\) is a small type.
 \end{itemize}
 
-You may observe that we can only reach contexts describing slice toposes.
-This can be fixed by allowing large \(A\) in contexts \(\Gamma, x : A\).
-I'm not sure how to do this properly, but at least \(\Gamma, x : \star\) ought to be the product in \(\mathbf{Topos}\)
-of \(\Gamma\) and the classifying topos for the theory of objects.
-
-Interpreting \(\Pi\)-types is easy: \((x : A) \to B\) should be the direct image of \(B\) under the geometric morphism \(\mathsf{wk} : \Sb((\Gamma, x : A),\Gamma)\).
+Finally, the universe \(\mathcal{U} : \Ty(\Gamma)\) is a large type.
+We interpret it as the product of \(\Gamma\) and the classifying topos for objects, equipped with the product projection back to \(\Gamma\).
+Sections of this projection correspond exactly to small types, as required.
 
 \section{Consequences}
 
